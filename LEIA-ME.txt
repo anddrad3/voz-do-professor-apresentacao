@@ -1,0 +1,53 @@
+VOZ DO PROFESSOR — APRESENTAÇÃO INTERATIVA
+==========================================
+
+São duas páginas:
+  • apresentacao.html → a que vai no telão (computador)
+  • controle.html     → o controle no celular, com o texto de cada slide
+
+
+JEITO RECOMENDADO (com o celular como controle)
+-----------------------------------------------
+1. Copie esta pasta inteira para o computador da apresentação.
+2. Dê dois cliques em:
+     Windows → "Iniciar apresentacao (Windows).exe"
+     Mac     → "Iniciar apresentacao (Mac).command"
+   Uma janela preta abre (deixe-a aberta) e a apresentação abre sozinha no navegador.
+3. Na apresentação, aperte a tecla C: aparece um QR code.
+4. No celular, aponte a câmera para o QR code e abra o link.
+   Pronto: os botões do celular passam os slides e o texto de cada slide aparece na tela do celular.
+
+IMPORTANTE: o celular e o computador precisam estar na MESMA rede Wi-Fi.
+Redes de universidade (como a eduroam) costumam bloquear a conversa entre aparelhos.
+Se o celular não conectar, ligue o roteador (hotspot) do celular e conecte o computador nele;
+depois feche a janela preta e abra o "Iniciar" de novo. Não precisa de internet.
+
+Primeira vez em cada computador:
+  • Windows: se aparecer "O Windows protegeu o computador", clique em "Mais informações" → "Executar assim mesmo".
+    Se o Firewall perguntar, clique em "Permitir acesso" (redes privadas).
+  • Mac: se disser que o desenvolvedor não pode ser verificado, clique com o botão direito no arquivo
+    "Iniciar apresentacao (Mac).command" → Abrir → Abrir. Se o Mac perguntar sobre conexões de rede, clique em Permitir.
+
+Para encerrar: feche a janela preta.
+
+
+SEM O CELULAR
+-------------
+Dá para abrir apresentacao.html direto (dois cliques) e passar os slides pelo teclado.
+O controle.html aberto direto funciona como roteiro de leitura (e controla a apresentação
+se as duas estiverem abertas no mesmo navegador do mesmo computador, por exemplo num segundo monitor).
+
+
+ATALHOS NA APRESENTAÇÃO
+-----------------------
+  → ou espaço   próximo        ← anterior
+  F             tela cheia (entrar e sair)
+  O             visão geral dos slides
+  C             conectar o celular (QR code)
+  H             fixar ou esconder a barra de controles
+  N             notas do apresentador no próprio computador
+
+A barra de controles fica escondida: leve o mouse até a borda de baixo para ela aparecer.
+Com H ela fica fixa e o slide encolhe um pouco para não ficar coberto.
+No Chrome e no Edge, o Esc não tira mais da tela cheia (use F; ou segure Esc).
+Janelas como a visão geral fecham com clique fora, no X ou na mesma tecla.

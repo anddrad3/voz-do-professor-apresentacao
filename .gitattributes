@@ -1,0 +1,8 @@
+* text=auto
+*.html text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.sh text eol=lf
+*.command text eol=lf
+*.exe binary
+sistema/voz-* binary

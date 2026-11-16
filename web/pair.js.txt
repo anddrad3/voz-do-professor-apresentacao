@@ -1,0 +1,17 @@
+function renderPair(){
+  const qr=$('#pairQr'),body=$('#pairBody'),h=$('#pairH');
+  h.textContent='Controle pelo celular';
+  qr.innerHTML='';
+  if(typeof qrcode==='function'){
+    const code=qrcode(0,'M');code.addData(link.url);code.make();
+    qr.innerHTML=code.createSvgTag({cellSize:4,margin:16,scalable:true});
+    qr.querySelector('svg').setAttribute('aria-label','QR code para o controle desta apresentação');
+  }else{qr.textContent='Use o link ao lado';}
+  body.innerHTML='<ol><li>Deixe esta apresentação aberta no computador.</li><li>Escaneie o QR code com o celular conectado à internet.</li><li>Use o controle para passar os slides e ler o roteiro.</li></ol><p><a class="url" id="remoteLink" target="_blank" rel="noopener noreferrer">Abrir controle desta sessão ↗</a></p><button class="btn" id="copyRemote" style="margin-top:16px">Copiar link do controle</button><p style="font-size:14px">O link é exclusivo desta sessão. Compartilhe apenas com quem vai apresentar. Se recarregar a apresentação, escaneie o novo código.</p><p style="font-size:14px">Se a rede bloquear a conexão, conecte os aparelhos ao mesmo Wi-Fi ou hotspot. Os slides continuam funcionando pelo teclado.</p>';
+  $('#remoteLink').href=link.url;
+  $('#copyRemote').onclick=async()=>{
+    try{await navigator.clipboard.writeText(link.url);toast('Link copiado');}
+    catch(e){const field=document.createElement('input');field.value=link.url;field.readOnly=true;field.style.cssText='width:100%;margin-top:12px;padding:12px';body.appendChild(field);field.focus();field.select();}
+  };
+  updPeers();
+}

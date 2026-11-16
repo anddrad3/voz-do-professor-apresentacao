@@ -1,0 +1,13 @@
+function status(){
+  const sd=$('#sd'),t=$('#stTxt'),bn=$('#banner');
+  if(!link.http){
+    sd.className='sd off';t.textContent='Modo leitura';
+    bn.textContent='Para controlar os slides, abra a apresentação no computador, pressione C e escaneie o QR code.';bn.classList.add('show');
+  }else if(connected()){
+    sd.className='sd on';t.textContent='Conectado à apresentação';bn.classList.remove('show');
+  }else{
+    sd.className=serverUp?'sd':'sd off';t.textContent='Conectando à apresentação…';
+    bn.textContent=link.error||'Mantenha a apresentação aberta no computador. Se não conectar, use o mesmo Wi-Fi ou hotspot e escaneie o QR code novamente. Tentando conectar automaticamente…';bn.classList.add('show');
+  }
+  $('#help').textContent='Abra o controle pelo QR code da apresentação (tecla C). O roteiro e o cronômetro também funcionam em modo leitura. O link vale apenas para a sessão atual.';
+}

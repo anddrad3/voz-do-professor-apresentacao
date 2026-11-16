@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Voz do Professor: apresentação interativa com 20 slides e controle pelo celular.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Controle · Voz do Professor</title>
+<style>
+:root{
+  --bg:#000; --panel:#1c1c1e; --panel2:#2c2c2e; --line:rgba(255,255,255,.09);
+  --ink:#f5f5f7; --ink2:#a1a1a6; --ink3:#6e6e73; --red:#ff375f; --red2:#ff453a; --green:#30d158; --orange:#ff9f0a;
+  --ease:cubic-bezier(.22,1,.36,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  --fs:21px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+
+/* top */
+.top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(var(--sat) + 12px) 16px 12px}
+.status{display:flex;align-items:center;gap:8px;min-width:0;padding:8px 12px;border-radius:999px;background:var(--panel);font-size:13px;font-weight:600;color:var(--ink2)}
+.status span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 3px rgba(255,159,10,.2)}
+.sd.on{background:var(--green);box-shadow:0 0 0 3px rgba(48,209,88,.22);animation:pulse 2.2s infinite}
+.sd.off{background:#636366;box-shadow:none}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(48,209,88,0)}}
+.tright{display:flex;gap:8px;align-items:center}
+.timer{padding:8px 14px;border-radius:999px;background:var(--panel);font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;transition:background .3s,color .3s}
+.timer.run{background:rgba(48,209,88,.16);color:var(--green)}
+.timer.pause{color:var(--orange)}
+.icon{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--panel);color:var(--ink2)}
+.icon svg{width:18px;height:18px}
+.prog{flex:none;height:3px;margin:0 16px;border-radius:3px;background:var(--panel)}
+.prog i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#ff2d55,#ff453a,#ff9f0a);transition:width .6s var(--ease)}
+.banner{flex:none;margin:10px 16px 0;padding:10px 14px;border-radius:14px;background:rgba(255,159,10,.14);color:#ffd60a;font-size:13.5px;line-height:1.4;display:none}
+.banner.show{display:block}
+
+/* layout */
+.wrap{flex:1;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:1fr auto}
+.main{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px 26px;scroll-behavior:smooth}
+.slideno{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+h1{font-size:30px;line-height:1.08;letter-spacing:-.03em;margin:8px 0 18px}
+.fala{font-size:var(--fs);line-height:1.6;letter-spacing:-.005em;color:var(--ink)}
+.fala p+p{margin-top:.8em}
+.dica{display:none;margin-top:20px;padding:14px 16px;border-radius:16px;background:var(--panel);color:var(--ink2);font-size:15px;line-height:1.45}
+.dica.show{display:flex;gap:10px}
+.dica b{color:var(--ink)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.acts button{padding:12px 16px;border-radius:14px;background:var(--panel2);font-size:15px;font-weight:600;transition:transform .25s var(--spring),background .2s}
+.acts button:active{transform:scale(.94);background:#3a3a3c}
+.acts button.hit{background:rgba(255,55,95,.25)}
+.nextcard{margin-top:22px;padding:16px 18px;border-radius:18px;border:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.nextcard span{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.nextcard b{font-size:17px;font-weight:600;text-align:right}
+
+/* controls */
+.ctrl{flex:none;display:grid;grid-template-columns:1fr 1.7fr;gap:10px;padding:12px 16px calc(var(--sab) + 14px);background:linear-gradient(transparent,#000 30%)}
+.nav{height:76px;border-radius:24px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:19px;font-weight:700;transition:transform .2s var(--spring),filter .2s;user-select:none;-webkit-user-select:none}
+.nav:active{transform:scale(.96);filter:brightness(1.15)}
+.nav svg{width:24px;height:24px}
+.nav.prev{background:var(--panel);color:var(--ink2)}
+.nav.next{background:linear-gradient(135deg,#ff375f,#ff2d55 40%,#ff6a00);color:#fff;box-shadow:0 14px 30px -14px rgba(255,55,95,.8)}
+.nav:disabled{opacity:.35}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s;z-index:20}
+.scrim.open{opacity:1;visibility:visible;transition-delay:0s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:86dvh;display:flex;flex-direction:column;background:#111113;border-radius:26px 26px 0 0;padding:10px 16px calc(var(--sab) + 16px);transform:translateY(105%);transition:transform .45s var(--ease)}
+.sheet.open{transform:none}
+.grab{width:40px;height:5px;border-radius:5px;background:#3a3a3c;margin:4px auto 12px}
+.sheet h3{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:6px 4px 10px}
+.list{overflow-y:auto;min-height:0;flex:1;border-radius:16px;background:var(--panel)}
+.list button{display:flex;gap:14px;align-items:center;width:100%;padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:16px}
+.list button:last-child{border-bottom:0}
+.list button b{width:26px;font-size:13px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.list button.on{background:rgba(255,55,95,.14)}
+.list button.on b{color:var(--red)}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.settings .row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:var(--panel);font-size:14.5px;gap:8px}
+.settings .row.full{grid-column:1/-1}
+.seg{display:flex;gap:6px}
+.seg button{width:40px;height:34px;border-radius:10px;background:var(--panel2);font-weight:700}
+.tog{position:relative;width:50px;height:30px;border-radius:999px;background:#3a3a3c;transition:background .3s;flex:none}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .3s var(--spring)}
+.tog.on{background:var(--green)}
+.tog.on::after{left:23px}
+.small{font-size:12.5px;color:var(--ink3);line-height:1.5;margin:12px 4px 0}
+.toast{position:fixed;left:50%;top:calc(var(--sat) + 64px);transform:translateX(-50%) translateY(-10px);z-index:30;padding:10px 16px;border-radius:999px;background:#2c2c2e;font-size:14px;font-weight:600;opacity:0;transition:all .35s var(--spring);pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.swap{animation:swap .45s var(--ease)}
+@keyframes swap{from{opacity:0;transform:translateY(10px)}}
+video.ns{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none}
+
+/* tablet / computador: duas colunas (visão do apresentador) */
+@media (min-width:900px){
+  #nextM{display:none}
+  body{max-width:1400px;margin:0 auto}
+  .wrap{grid-template-columns:1fr 380px;grid-template-rows:1fr;gap:24px;padding:0 16px 16px}
+  .main{padding:28px 28px 40px;background:#0b0b0c;border-radius:24px;margin-top:14px}
+  h1{font-size:40px}
+  :root{--fs:24px}
+  .side{display:flex;flex-direction:column;gap:12px;margin-top:14px;min-height:0}
+  .ctrl{grid-template-columns:1fr;padding:0;background:none;gap:12px;margin-top:auto}
+  .nav{height:92px}
+  .nav.prev{height:64px}
+  .ctrl .nav.next{order:-1}
+}
+@media (max-width:899px){ .side{display:contents} .side .nextcard{display:none} }
+@media (orientation:landscape) and (max-height:500px){
+  .nav{height:56px}
+  h1{font-size:24px;margin-bottom:10px}
+  .top{padding-top:calc(var(--sat) + 6px);padding-bottom:6px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="status" id="status"><span class="sd" id="sd"></span><span id="stTxt">Conectando…</span></div>
+  <div class="tright">
+    <button class="timer" id="timer" title="Toque: iniciar/pausar · segure: zerar">00:00</button>
+    <button class="icon" id="menuBtn" aria-label="Slides e ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+<div class="prog"><i id="prog"></i></div>
+<div class="banner" id="banner"></div>
+
+<div class="wrap">
+  <main class="main" id="main">
+    <div id="content">
+      <div class="slideno" id="no">Slide 1 de 20</div>
+      <h1 id="title">—</h1>
+      <div class="fala" id="fala"></div>
+      <div class="dica" id="dica"></div>
+      <div class="acts" id="acts"></div>
+      <div class="nextcard" id="nextM"><span>A seguir</span><b id="nextT"></b></div>
+    </div>
+  </main>
+  <aside class="side">
+    <div class="nextcard"><span>A seguir</span><b id="nextT2"></b></div>
+    <footer class="ctrl">
+      <button class="nav prev" id="prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>Anterior</span></button>
+      <button class="nav next" id="next"><span>Próximo</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    </footer>
+  </aside>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h3>Ir para o slide</h3>
+  <div class="list" id="list"></div>
+  <div class="settings">
+    <div class="row"><span>Texto</span><div class="seg"><button id="fsm">A−</button><button id="fsp">A+</button></div></div>
+    <div class="row"><span>Tela ligada</span><span class="tog on" id="wake"></span></div>
+    <div class="row"><span>Vibrar</span><span class="tog on" id="vib"></span></div>
+    <div class="row"><span>Cronômetro</span><button class="seg" id="tReset" style="padding:7px 12px;border-radius:10px;background:var(--panel2);font-weight:600">Zerar</button></div>
+  </div>
+  <p class="small" id="help"></p>
+</div>
+<div class="toast" id="toast"></div>
+<video class="ns" id="ns" muted playsinline loop src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMpbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlN0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHLbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAgABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABdm1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAATZzdGJsAAAAtnN0c2QAAAAAAAAAAQAAAKZhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAALGF2Y0MBQsAK/+EAFWdCwAraewEQAAADABAAAAMAIPEiagEABGjOD8gAAAAQcGFzcAAAAAEAAAABAAAAFGJ0cnQAAAAAAAAKMAAACjAAAAAYc3R0cwAAAAAAAAABAAAAAgAAQAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAgAAAAEAAAAcc3RzegAAAAAAAAAAAAAAAgAAAoMAAAAJAAAAFHN0Y28AAAAAAAAAAQAAA1kAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjYwLjE2LjEwMAAAAAhmcmVlAAAClG1kYXQAAAJtBgX//2ncRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTY0IHIzMTA4IDMxZTE5ZjkgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDIzIC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MCByZWY9MSBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgxOjB4MSBtZT1oZXggc3VibWU9MiBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0wIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MCA4eDhkY3Q9MCBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0wIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTAgd2VpZ2h0cD0wIGtleWludD0yNTAga2V5aW50X21pbj0xIHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9MTAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAADmWIhAW///8PRQABT3+AAAAABUGaIBX1"></video>
+
+<script src="vendor/peerjs.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="connection.js"></script>
+<script>
+
+(()=>{
+const SLIDES=[{"t": "Capa", "fala": "Boa tarde a todos. Agradeço aos membros da banca pela leitura do projeto e pela presença. Apresento o projeto Voz do Professor: informação, autonomia e valorização docente diante da padronização do trabalho pedagógico. Ele se insere na linha Políticas, gestão e formação na educação do PPGPAPP da Unesp de Franca, sob orientação do Prof. Dr. Genaro Alvarenga Fonseca, com aderência direta ao projeto “Políticas públicas educacionais e o enfrentamento ao fracasso escolar”. Ao longo da apresentação vou alternar entre a fundamentação e o protótipo da plataforma, que já está no ar.", "dica": "Avance pelo botão Próximo ou deslizando para o lado.", "acts": []}, {"t": "O problema", "fala": "Parto de uma inversão proposta por Maria Helena Souza Patto. Durante décadas, o fracasso escolar foi explicado por teorias raciais, psicométricas e da carência cultural, que deslocam para os alunos pobres e suas famílias a responsabilidade pelos resultados. Patto mostra que a reprovação, a evasão e a chamada dificuldade de aprendizagem são produzidas nas relações escolares e na forma como as políticas se organizam. Isso tem uma consequência decisiva para este projeto: se o fracasso é produzido institucionalmente, o professor não é a sua causa. Ele é um dos agentes cujas condições de trabalho, de formação e de autonomia determinam a forma mais eficaz de enfrentá-lo.", "dica": "O primeiro Próximo troca o diagrama para a leitura crítica; o segundo avança de slide.", "acts": [["Leitura naturalizada", "prob:a"], ["Leitura crítica", "prob:b"]]}, {"t": "Pergunta de pesquisa", "fala": "Daí nasce a pergunta que organiza a pesquisa: em que nível a ausência de autoria intelectual do professor sobre o próprio trabalho integra as condições precárias que produzem o fracasso escolar — e quais ferramentas de política pública educacional fortalecem a autonomia docente? A pergunta tem uma dimensão diagnóstica, sobre as condições concretas do trabalho, e uma dimensão propositiva, que se materializa na plataforma.", "dica": "", "acts": []}, {"t": "A IA chegou antes da política", "fala": "Esse quadro ganhou um elemento novo: a inteligência artificial generativa chegou à escola mais rápido do que as políticas de formação. Segundo a TIC Educação 2024, 43% dos docentes do fundamental e do médio já usam essas ferramentas para preparar conteúdos; no ensino médio são 58% e, na rede particular, 51%. Entre os estudantes do ensino médio que usam a internet, 70% usam IA, mas só 33% aprenderam a identificar erros e vieses e apenas 19% receberam orientação de professores. Um estudo qualitativo do Cetic.br confirma uma adoção rápida, marcada pelo improviso, pela desigualdade de acesso e pela ausência de diretrizes. O uso se difundiu antes de se tornar objeto de política pública.", "dica": "", "acts": [["Animar os anéis de novo", "ia:replay"]]}, {"t": "De quem é a aula?", "fala": "O problema não é a IA em si, mas a forma como ela vem sendo incorporada — e isso tem antecedente na própria rede paulista. Em 2008, como analisou o professor Genaro, a Proposta Curricular e os Cadernos do Professor traziam temas, perguntas, exercícios e avaliações definidos de antemão, em contradição com o discurso oficial de autonomia. Hoje a padronização chega pelo mercado: apostilas, slides e planos de aula gerados por algoritmos e vendidos diretamente ao professor, sem critérios públicos equivalentes aos do PNLD. Bodart descreve isso como alienação do trabalho intelectual docente. Nos dois casos, a autoria pedagógica é deslocada para fora dos muros da escola.", "dica": "A linha do tempo anima sozinha; use os botões para voltar a 2008 ou ir para hoje.", "acts": [["2008", "std:0"], ["Hoje", "std:100"], ["Animar", "std:play"]]}, {"t": "Hipótese", "fala": "A esse quadro somam-se a precarização e a flexibilização do trabalho descritas por Dalila Oliveira e os problemas estruturais de formação apontados por Bernardete Gatti. Ao professor se atribui uma responsabilidade crescente pelo êxito escolar, mas se oferecem vínculos instáveis, jornadas intensificadas e acesso limitado a informações sobre direitos, carreira e normas profissionais. A hipótese do projeto é que o déficit informacional e a perda de autonomia intelectual integram o mesmo processo — e que podem ser enfrentados por um instrumento público de baixo custo e ampla replicabilidade.", "dica": "", "acts": []}, {"t": "A proposta", "fala": "Esse instrumento é o Voz do Professor. A premissa de projeto é simples: a plataforma não produz material de aula pronto nem conteúdo pedagógico. Ela informa, organiza e devolve ao docente uma dimensão coletiva da sua realidade, deixando intacto o plano em que ele exerce a sua autoria intelectual. É uma ferramenta gratuita, de professor para professor, que não pensa no lugar dele.", "dica": "", "acts": []}, {"t": "Quatro módulos", "fala": "A plataforma se organiza em quatro módulos integrados. O primeiro é a informação e curadoria normativa: notícias, decisões dos conselhos de educação e atos normativos em linguagem acessível, com curadoria humana identificada e fonte verificável. O segundo, diferencial da proposta, é o Radar regional de oportunidades. O terceiro é o alerta de concursos e processos seletivos, com notificação por perfil e raio de distância. O quarto é o canal de escuta, que registra de forma anônima as condições de trabalho e produz dados públicos úteis a sindicatos, secretarias e pesquisadores, sempre conforme a LGPD.", "dica": "Abra cada módulo na tela enquanto fala dele.", "acts": [["a · Curadoria", "mod:0"], ["b · Radar", "mod:1"], ["c · Concursos", "mod:2"], ["d · Escuta", "mod:3"]]}, {"t": "O protótipo no ar", "fala": "Este é o protótipo real, já no ar. Na página Direitos e Notícias, o catálogo é atualizado todos os dias com até vinte notícias inéditas — Franca e região, São Paulo, Brasil e exterior —, organizadas por categoria. O filtro com IA só é acionado quando o professor envia a pergunta, e exige três confirmações explícitas antes. Cada publicação mostra a fonte, a data, o trecho atribuído e o link para o original, com os recursos de ouvir e citar. Há ainda a legislação obtida por APIs legislativas, com cobertura parcial declarada, e uma página de transparência sobre fontes, metodologia e privacidade.", "dica": "Troque as telas do notebook pelos botões abaixo.", "acts": [["◀ Tela anterior", "tour:-1"], ["Próxima tela ▶", "tour:1"]]}, {"t": "No bolso do professor", "fala": "A interface foi pensada para o celular, que é onde o professor de fato consulta informação, entre uma aula e outra. Destaco os recursos de acessibilidade: leitura em voz alta de cada publicação, citação com um toque, atalho para pular direto ao conteúdo e navegação por abas. A fonte e a responsabilidade editorial estão sempre visíveis.", "dica": "", "acts": []}, {"t": "Radar regional", "fala": "O Radar é o módulo central da proposta. Em vez de depender de informações limitadas e de difícil acesso, o sistema constrói um cadastro próprio a partir dos dados públicos do CNPJ, disponibilizados pela Receita Federal. Filtra os estabelecimentos ativos pelos códigos da Seção P da CNAE, relativos à educação, cruza com o município informado pelo professor, geolocaliza e faz a validação cruzada com o Censo Escolar. O resultado é um mapa georreferenciado dos estabelecimentos de ensino no entorno do professor. A cobertura, os falsos positivos e a defasagem cadastral não ficam escondidos: são resultados da própria pesquisa.", "dica": "O radar na tela é uma ilustração do conceito.", "acts": [["Varrer o radar", "radar"]]}, {"t": "Ética e privacidade", "fala": "Privacidade é uma premissa de projeto, não um acessório. Não há contas de visitantes, e a aplicação não grava IP nem histórico de navegação. Preferências e favoritos ficam apenas no navegador. Cada consulta à IA exige consentimento explícito, e as estatísticas são somente agregadas, sem exibir grupos com menos de cinco registros. O CEP é consultado e não é armazenado. Na pesquisa de campo, o protocolo será submetido ao Comitê de Ética, conforme a Resolução CNS 510 de 2016 e a LGPD.", "dica": "Tente desligar uma chave: ela volta sozinha.", "acts": [["Tentar desligar uma chave 🙂", "priv"]]}, {"t": "Objetivos", "fala": "O objetivo geral é analisar as condições de formação, informação e autonomia dos professores da educação básica e desenvolver, implementar e avaliar a plataforma como ferramenta de política pública de valorização docente e de enfrentamento ao fracasso escolar. Os objetivos específicos são: analisar a produção acadêmica; analisar a legislação, com ênfase no Decreto 12.456 de 2025; categorizar, com professores da região de Franca, as fontes de busca de emprego e os critérios de escolha de materiais; desenvolver e validar a busca territorial de vagas; construir o protótipo funcional; e criar um guia de implementação.", "dica": "Marque cada objetivo na tela enquanto fala dele.", "acts": [["Marcar próximo ✓", "obj:next"], ["Limpar", "obj:reset"]]}, {"t": "Ciclo de políticas", "fala": "O referencial metodológico é a abordagem do ciclo de políticas de Stephen Ball e Richard Bowe, difundida no Brasil por Jefferson Mainardes. Ela permite examinar o percurso de uma política entre os contextos de influência, de produção do texto, da prática, dos resultados e efeitos e da estratégia política. E permite compreender o educador não como mero fim da política, mas como agente de mudança.", "dica": "Destaque cada contexto na tela.", "acts": [["Influência", "cyc:0"], ["Produção do texto", "cyc:1"], ["Prática", "cyc:2"], ["Resultados e efeitos", "cyc:3"], ["Estratégia política", "cyc:4"]]}, {"t": "Procedimentos", "fala": "Os procedimentos organizam-se em cinco etapas, numa abordagem qualiquantitativa. Primeiro, a revisão da produção na BDTD, no Catálogo da Capes e em periódicos, de 2015 a 2026. Depois, a análise documental: LDB, Lei do Piso, PNE e o Decreto 12.456, além de editais regionais. Em terceiro lugar, o tratamento das bases abertas do CNPJ. Em quarto, a pesquisa de campo, com questionário para no mínimo duzentos professores da região de Franca e dois a três grupos focais. Por fim, o desenvolvimento e a avaliação do protótipo com usuários reais.", "dica": "", "acts": []}, {"t": "Análise e triangulação", "fala": "As fontes documentais e as questões abertas serão submetidas à análise de conteúdo, segundo Franco, com categorias definidas a priori e categorias emergentes. O questionário será tratado por estatística descritiva e testes de associação entre perfis. Os grupos focais serão examinados quanto às trajetórias profissionais, às práticas de planejamento e aos critérios de escolha de materiais. A triangulação entre literatura, normas, sujeitos e bases cadastrais busca evidenciar a distância entre a informação pública e a informação de fato acessível ao professor.", "dica": "", "acts": []}, {"t": "Cronograma", "fala": "A execução está planejada para vinte e quatro meses, em quatro semestres, a partir de 9 de abril de 2027. No primeiro ano concentram-se as disciplinas, a revisão, a análise documental e a submissão ao Comitê de Ética, com a qualificação no segundo semestre. O terceiro semestre é dedicado ao campo e ao início do protótipo; o quarto, aos testes de usabilidade, ao produto técnico, ao guia de implementação e à defesa.", "dica": "Use os filtros para destacar cada tipo de atividade.", "acts": [["Tudo", "gantt:all"], ["Formação", "gantt:form"], ["Pesquisa", "gantt:pesq"], ["Campo e dados", "gantt:campo"], ["Produto", "gantt:prod"], ["Escrita", "gantt:esc"]]}, {"t": "Resultados esperados", "fala": "Ao final, a pesquisa entrega três produtos: um diagnóstico das condições concretas do trabalho docente na região; a plataforma Voz do Professor como artefato funcional, avaliado com usuários reais; e um guia de implementação voltado a secretarias de educação, sindicatos, empresas e organizações da sociedade civil, com potencial de replicação nacional — em sintonia com a natureza profissional do mestrado.", "dica": "", "acts": []}, {"t": "Obrigado", "fala": "Diante de um cenário em que a mediação algorítmica vem convertendo o professor em executor de decisões tomadas fora da escola, a proposta não é oferecer mais uma ferramenta que pense em seu lugar, mas um instrumento que ajude a devolver as condições materiais e informacionais de pensar por si. Agradeço a atenção da banca e fico à disposição para as perguntas.", "dica": "O QR code na tela abre o protótipo para a banca.", "acts": [["Confete 🎉", "confetti"]]}, {"t": "Referências", "fala": "Deixo aqui as referências principais do projeto para consulta durante a arguição.", "dica": "", "acts": []}], N=SLIDES.length;
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem('vdp-'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('vdp-'+k,JSON.stringify(v))}catch(e){}}};
+let cur=0, shows=0, serverUp=false, gotState=false;
+
+/* ---------- render ---------- */
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function render(anim){
+  const d=SLIDES[cur];
+  $('#no').textContent=`Slide ${cur+1} de ${N}`;
+  $('#title').textContent=d.t;
+  $('#fala').innerHTML=d.fala.split(/\n+/).map(p=>`<p>${esc(p)}</p>`).join('');
+  const dk=$('#dica');dk.classList.toggle('show',!!d.dica);dk.innerHTML=d.dica?`<span>💡</span><span>${esc(d.dica)}</span>`:'';
+  const ac=$('#acts');ac.innerHTML='';
+  (d.acts||[]).forEach(([label,a])=>{const b=document.createElement('button');b.textContent=label;b.onclick=()=>{buzz(8);b.classList.add('hit');setTimeout(()=>b.classList.remove('hit'),350);
+    if(connected())link.send({t:'act',a});else toast('Sem apresentação conectada')};ac.appendChild(b)});
+  const nt=cur<N-1?SLIDES[cur+1].t:'Fim da apresentação';$('#nextT').textContent=nt;$('#nextT2').textContent=nt;
+  $('#prog').style.width=(cur/(N-1)*100)+'%';
+  $('#prev').disabled=cur===0;$('#next').querySelector('span').textContent=cur===N-1?'Fim':'Próximo';
+  [...$('#list').children].forEach((b,k)=>b.classList.toggle('on',k===cur));
+  if(anim){const c=$('#content');c.classList.remove('swap');void c.offsetWidth;c.classList.add('swap');$('#main').scrollTop=0}
+}
+SLIDES.forEach((d,i)=>{const b=document.createElement('button');b.innerHTML=`<b>${String(i+1).padStart(2,'0')}</b><span>${esc(d.t)}</span>`;b.onclick=()=>{goto(i);closeSheet()};$('#list').appendChild(b)});
+
+/* ---------- conexão ---------- */
+const link=createLink('remote',m=>{
+  if(m.t==='state'){gotState=true;const was=cur;cur=Math.max(0,Math.min(N-1,+m.i));if(!link.http)shows=1;status();render(was!==cur);if(cur>0)autoStart()}
+  else if(m.t==='peers'){shows=m.shows||0;status()}
+},st=>{serverUp=st.server;status();if(st.server)hello()});
+function hello(){link.send({t:'hello'})}
+hello();
+function connected(){return link.http?(serverUp&&shows>0):gotState}
+function status(){
+  const sd=$('#sd'),t=$('#stTxt'),bn=$('#banner');
+  if(!link.http){
+    sd.className='sd off';t.textContent='Modo leitura';
+    bn.textContent='Para controlar os slides, abra a apresentação no computador, pressione C e escaneie o QR code.';bn.classList.add('show');
+  }else if(connected()){
+    sd.className='sd on';t.textContent='Conectado à apresentação';bn.classList.remove('show');
+  }else{
+    sd.className=serverUp?'sd':'sd off';t.textContent='Conectando à apresentação…';
+    bn.textContent=link.error||'Mantenha a apresentação aberta no computador. Se não conectar, use o mesmo Wi-Fi ou hotspot e escaneie o QR code novamente. Tentando conectar automaticamente…';bn.classList.add('show');
+  }
+  $('#help').textContent='Abra o controle pelo QR code da apresentação (tecla C). O roteiro e o cronômetro também funcionam em modo leitura. O link vale apenas para a sessão atual.';
+}
+status();render();
+
+/* ---------- navegação ---------- */
+function goto(i){i=Math.max(0,Math.min(N-1,i));buzz(10);if(connected())link.send({t:'go',i});else{cur=i;render(true)}}
+function step(d){buzz(12);if(connected())link.send({t:d>0?'next':'prev'});else{const n=Math.max(0,Math.min(N-1,cur+d));if(n!==cur){cur=n;render(true)}}if(d>0)autoStart()}
+$('#next').onclick=()=>step(1);$('#prev').onclick=()=>step(-1);
+addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();step(1)}else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();step(-1)}});
+let sx=null,sy=null,st0=0;const mainEl=$('#main');
+mainEl.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;st0=Date.now()},{passive:true});
+mainEl.addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.6&&Date.now()-st0<700)step(dx<0?1:-1);sx=null},{passive:true});
+
+/* ---------- cronômetro ---------- */
+let tStart=null,tAcc=store.get('tacc',0),tRun=false;
+function fmt(ms){const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+function tNow(){return tAcc+(tRun?Date.now()-tStart:0)}
+function tPaint(){const el=$('#timer');el.textContent=fmt(tNow());el.classList.toggle('run',tRun);el.classList.toggle('pause',!tRun&&tAcc>0)}
+function tToggle(){if(tRun){tAcc+=Date.now()-tStart;tRun=false}else{tStart=Date.now();tRun=true}store.set('tacc',tAcc);tPaint()}
+function tReset(){tRun=false;tAcc=0;store.set('tacc',0);tPaint();toast('Cronômetro zerado')}
+function autoStart(){if(!tRun&&tAcc===0){tStart=Date.now();tRun=true;tPaint()}}
+setInterval(()=>{tPaint();if(tRun)store.set('tacc',tNow())},500);tPaint();
+let lp=null;const tb=$('#timer');
+tb.addEventListener('pointerdown',()=>{lp=setTimeout(()=>{lp='done';buzz(30);tReset()},650)});
+tb.addEventListener('pointerup',()=>{if(lp!=='done'){clearTimeout(lp);tToggle();buzz(8)}lp=null});
+tb.addEventListener('pointerleave',()=>{if(lp&&lp!=='done')clearTimeout(lp);lp=null});
+$('#tReset').onclick=tReset;
+
+/* ---------- menu / ajustes ---------- */
+function openSheet(){$('#sheet').classList.add('open');$('#scrim').classList.add('open');const on=$('#list').children[cur];on&&on.scrollIntoView({block:'center'})}
+function closeSheet(){$('#sheet').classList.remove('open');$('#scrim').classList.remove('open')}
+$('#menuBtn').onclick=openSheet;$('#scrim').onclick=closeSheet;
+let sheetY=null;$('#sheet').addEventListener('touchstart',e=>{if(e.target.closest('.list'))return;sheetY=e.touches[0].clientY},{passive:true});
+$('#sheet').addEventListener('touchend',e=>{if(sheetY!=null&&e.changedTouches[0].clientY-sheetY>60)closeSheet();sheetY=null},{passive:true});
+let fs=store.get('fs',null);function applyFs(){if(fs)document.documentElement.style.setProperty('--fs',fs+'px')}applyFs();
+$('#fsm').onclick=()=>{fs=Math.max(15,(fs||parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fs')))-2);store.set('fs',fs);applyFs()};
+$('#fsp').onclick=()=>{fs=Math.min(34,(fs||parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fs')))+2);store.set('fs',fs);applyFs()};
+let vib=store.get('vib',true);$('#vib').classList.toggle('on',vib);$('#vib').onclick=()=>{vib=!vib;store.set('vib',vib);$('#vib').classList.toggle('on',vib)};
+function buzz(ms){if(vib&&navigator.vibrate)try{navigator.vibrate(ms)}catch(e){}}
+
+/* ---------- manter a tela ligada ---------- */
+let wakeOn=store.get('wake',true),wl=null;$('#wake').classList.toggle('on',wakeOn);
+async function wakeUp(){if(!wakeOn)return;
+  try{if('wakeLock' in navigator){wl=await navigator.wakeLock.request('screen');return}}catch(e){}
+  try{await $('#ns').play()}catch(e){}}
+function wakeDown(){try{wl&&wl.release()}catch(e){};wl=null;try{$('#ns').pause()}catch(e){}}
+$('#wake').onclick=()=>{wakeOn=!wakeOn;store.set('wake',wakeOn);$('#wake').classList.toggle('on',wakeOn);wakeOn?wakeUp():wakeDown()};
+addEventListener('pointerdown',function f(){wakeUp();removeEventListener('pointerdown',f)},{once:true});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){wakeUp();hello()}});
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1700)}
+})();
+</script>
+</body>
+</html>
